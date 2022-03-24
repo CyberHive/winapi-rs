@@ -1,10 +1,15 @@
 use crate::{
+    km::wdm::{
+        IO_STATUS_BLOCK, KPROCESSOR_MODE, PDEVICE_OBJECT, PDRIVER_OBJECT, PETHREAD,
+        PIO_STATUS_BLOCK, PIRP, PKEVENT, POOL_TYPE, STANDARD_RIGHTS_ALL,
+    },
     km::MISS_TYPE_PTR,
-    km::wdm::{IO_STATUS_BLOCK,PETHREAD, KPROCESSOR_MODE,PDEVICE_OBJECT, PDRIVER_OBJECT, PIO_STATUS_BLOCK, PIRP, PKEVENT,POOL_TYPE},
     shared::{basetsd::*, ntdef::*},
+    um::winnt::PSECURITY_DESCRIPTOR,
     *,
 };
 
+pub type PFLT_PORT = PVOID;
 pub type PFLT_FILTER = PVOID;
 pub type PFLT_VOLUME = PVOID;
 pub type PKTRANSACTION = PVOID;
@@ -20,6 +25,9 @@ pub const FILE_READ_ONLY_DEVICE: u32 = 2;
 pub const FILE_FLOPPY_DISKETTE: u32 = 4;
 pub const FILE_WRITE_ONCE_MEDIA: u32 = 8;
 pub const FILE_REMOTE_DEVICE: u32 = 16;
+
+pub const FLT_PORT_CONNECT: u32 = 0x0001;
+pub const FLT_PORT_ALL_ACCESS: u32 = FLT_PORT_CONNECT | STANDARD_RIGHTS_ALL;
 
 #[link(name = "fltMgr")]
 extern "system" {
@@ -40,6 +48,11 @@ extern "system" {
     pub fn FltGetDiskDeviceObject(
         Volume: PFLT_VOLUME,
         DiskDeviceObject: *mut PDEVICE_OBJECT,
+    ) -> NTSTATUS;
+
+    pub fn FltBuildDefaultSecurityDescriptor(
+        SecurityDescriptor: *const PSECURITY_DESCRIPTOR,
+        DesiredAccess: ACCESS_MASK,
     ) -> NTSTATUS;
 
     pub fn IoVolumeDeviceToDosName(VolumeDeviceObject: PVOID, DosName: PUNICODE_STRING)
@@ -126,7 +139,7 @@ pub type PFLT_PRE_OPERATION_CALLBACK = ::core::option::Option<
 
 pub type PFLT_POST_OPERATION_CALLBACK = ::core::option::Option<
     unsafe extern "system" fn(
-        Data: MISS_TYPE_PTR,
+        Data: PFLT_CALLBACK_DATA,
         FltObjects: PCFLT_RELATED_OBJECTS,
         CompletionContext: PVOID,
         Flags: FLT_POST_OPERATION_FLAGS,
@@ -237,7 +250,7 @@ pub const IRP_MJ_OPERATION_END: u8 = 0x80;
 pub const FLT_REGISTRATION_VERSION_0203: USHORT = 0x0203;
 pub const FLT_REGISTRATION_VERSION: USHORT = FLT_REGISTRATION_VERSION_0203;
 
-STRUCT!{ struct FLT_VOLUME_PROPERTIES {
+STRUCT! { struct FLT_VOLUME_PROPERTIES {
     DeviceType: ULONG,
     DeviceCharacteristics: ULONG,
     DeviceObjectFlags: ULONG,
@@ -262,11 +275,10 @@ pub struct _FLT_CALLBACK_DATA {
     pub RequestorMode: KPROCESSOR_MODE,
 }
 
-
-UNION!{union _FLT_CALLBACK_DATA__bindgen_ty_1 {
+UNION! {union _FLT_CALLBACK_DATA__bindgen_ty_1 {
         [u32; 4usize] [u64; 4usize],
         __bindgen_anon_1 __bindgen_anon_1_mut: _FLT_CALLBACK_DATA__bindgen_ty_1__bindgen_ty_1,
-        FilterContext FilterContext_mut: [PVOID; 4usize],       
+        FilterContext FilterContext_mut: [PVOID; 4usize],
 }}
 
 #[repr(C)]
@@ -299,12 +311,10 @@ pub struct _FLT_IO_PARAMETER_BLOCK {
 pub type FLT_PARAMETERS = _FLT_PARAMETERS;
 pub type PFLT_PARAMETERS = *mut _FLT_PARAMETERS;
 
-
 UNION! {union _FLT_PARAMETERS {
     [u32; 7usize] [u64; 6usize],
     Create Create_mut: _FLT_PARAMETERS__bindgen_ty_1,
 }}
-
 
 #[cfg(target_arch = "x86")]
 #[repr(C)]
