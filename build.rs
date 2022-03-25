@@ -13,6 +13,7 @@ const DATA: &'static [(&'static str, &'static [&'static str], &'static [&'static
     ("fwp", &["winnt","ws2def","minwindef","netioapi","basetsd","ntdef","km_util"], &[]),
     ("ndis", &["ntdef","minwindef","basetsd","km_util"], &[]),
     ("wdm", &["ntdef","basetsd","ndis","minwindef","winnt",], &[]),
+    ("ntifs", &["ntdef","basetsd","ndis","minwindef","winnt",], &[]),
     ("km_util", &["ntdef"], &[]),
     ("fltkernel", &["km_util","wdm","basetsd","ntdef"], &[]),
     // mmos
