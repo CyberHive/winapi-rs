@@ -55,6 +55,21 @@ extern "system" {
         DesiredAccess: ACCESS_MASK,
     ) -> NTSTATUS;
 
+    pub fn FltCreateCommunicationPort(
+        Filter: PFLT_FILTER,
+        ServerPort: *mut PFLT_PORT,
+        ObjectAttributes: POBJECT_ATTRIBUTES,
+        ServerPortCookie: PVOID,
+        ConnectNotifyCallback: PFLT_CONNECT_NOTIFY,
+        DisconnectNotifyCallback: PFLT_DISCONNECT_NOTIFY,
+        MessageNotifyCallback: PFLT_MESSAGE_NOTIFY,
+        MaxConnections: LONG,
+    ) -> NTSTATUS;
+
+    pub fn FltCloseCommunicationPort (
+        ServerPort: PFLT_PORT,
+    );
+
     pub fn IoVolumeDeviceToDosName(VolumeDeviceObject: PVOID, DosName: PUNICODE_STRING)
         -> NTSTATUS;
     pub fn IoBuildDeviceIoControlRequest(
@@ -70,6 +85,33 @@ extern "system" {
     ) -> PIRP;
     pub fn ExFreePoolWithTag(P: PVOID, Tag: ULONG);
 }
+
+pub type PFLT_CONNECT_NOTIFY = ::core::option::Option<
+    unsafe extern "system" fn(
+        ClientPort: PFLT_PORT,
+        ServerPortCookie: PVOID,
+        ConnectionContext: PVOID,
+        SizeOfContext: ULONG,
+        ConnectionPortCookie: *mut PVOID,
+    ) -> NTSTATUS
+>;
+
+pub type PFLT_DISCONNECT_NOTIFY = ::core::option::Option<
+    unsafe extern "system" fn(
+        ConnectionCookie: PVOID,
+    )
+>;
+
+pub type PFLT_MESSAGE_NOTIFY = ::core::option::Option<
+    unsafe extern "system" fn(
+        PortCookie: PVOID,
+        InputBuffer: PVOID,
+        InputBufferLength: ULONG,
+        OutputBuffer: PVOID,
+        OutputBufferLength: ULONG,
+        ReturnOutputBufferLength: PULONG,
+    ) -> NTSTATUS
+>;
 
 ENUM! {enum FLT_PREOP_CALLBACK_STATUS {
     FLT_PREOP_SUCCESS_WITH_CALLBACK = 0,
