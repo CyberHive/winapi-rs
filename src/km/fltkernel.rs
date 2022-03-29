@@ -66,8 +66,13 @@ extern "system" {
         MaxConnections: LONG,
     ) -> NTSTATUS;
 
-    pub fn FltCloseCommunicationPort (
+    pub fn FltCloseCommunicationPort(
         ServerPort: PFLT_PORT,
+    );
+
+    pub fn FltCloseClientPort(
+        Filter: PFLT_FILTER,
+        ClientPort: *mut PFLT_PORT,
     );
 
     pub fn IoVolumeDeviceToDosName(VolumeDeviceObject: PVOID, DosName: PUNICODE_STRING)
