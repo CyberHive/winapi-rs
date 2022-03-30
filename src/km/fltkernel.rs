@@ -51,9 +51,13 @@ extern "system" {
     ) -> NTSTATUS;
 
     pub fn FltBuildDefaultSecurityDescriptor(
-        SecurityDescriptor: *const PSECURITY_DESCRIPTOR,
+        SecurityDescriptor: *mut PSECURITY_DESCRIPTOR,
         DesiredAccess: ACCESS_MASK,
     ) -> NTSTATUS;
+
+    pub fn FltFreeSecurityDescriptor(
+        SecurityDescriptor: PSECURITY_DESCRIPTOR
+    );
 
     pub fn FltCreateCommunicationPort(
         Filter: PFLT_FILTER,
