@@ -1,9 +1,9 @@
-use ::shared::ntdef::*;
-use ::shared::basetsd::ULONG_PTR;
+use shared::basetsd::ULONG_PTR;
+use shared::ntdef::*;
 
 use km::ndis::PMDL;
-pub use ::shared::minwindef::DWORD;
-pub use um::winnt::{WCHAR, OSVERSIONINFOW, PRTL_OSVERSIONINFOW};
+pub use shared::minwindef::DWORD;
+pub use um::winnt::{OSVERSIONINFOW, PRTL_OSVERSIONINFOW, WCHAR};
 
 #[repr(C)]
 #[derive(Default)]
@@ -12,7 +12,7 @@ pub struct KSPIN_LOCK {
 }
 
 pub type PDRIVER_INITIALIZE =
-Option<extern "system" fn(_self: &mut DRIVER_OBJECT, &UNICODE_STRING) -> NTSTATUS>;
+    Option<extern "system" fn(_self: &mut DRIVER_OBJECT, &UNICODE_STRING) -> NTSTATUS>;
 pub type PDRIVER_STARTIO = Option<extern "system" fn(_self: &mut DRIVER_OBJECT, &IRP)>;
 pub type PDRIVER_UNLOAD = Option<extern "system" fn(_self: &mut DRIVER_OBJECT)>;
 pub type PDRIVER_OBJECT = *mut DRIVER_OBJECT;
@@ -37,7 +37,6 @@ pub struct DRIVER_OBJECT {
     /// A dispatch table consisting of an array of entry points for the driver's `DispatchXxx` routines.
     pub MajorFunction: [PDRIVER_DISPATCH; 28],
 }
-
 
 pub const _KWAIT_REASON_Executive: _KWAIT_REASON = 0;
 pub const _KWAIT_REASON_FreePage: _KWAIT_REASON = 1;
@@ -83,8 +82,6 @@ pub const _KWAIT_REASON_MaximumWaitReason: _KWAIT_REASON = 40;
 pub type _KWAIT_REASON = i32;
 
 pub use self::_KWAIT_REASON as KWAIT_REASON;
-
-
 
 #[repr(C)]
 pub enum DEVICE_TYPE {
@@ -206,7 +203,7 @@ pub enum IO_COMPLETION_ROUTINE_RESULT {
     StopCompletion = 0xC0000016,
 }
 
-STRUCT!{ struct DISPATCHER_HEADER {
+STRUCT! { struct DISPATCHER_HEADER {
     Type: u8,
     Absolute: u8,
     Size: u8,
@@ -271,14 +268,17 @@ pub struct DEVOBJ_EXTENSION {
 
 pub type PDEVICE_OBJECT = *mut DEVICE_OBJECT;
 pub type PDRIVER_CANCEL =
-Option<extern "system" fn(DeviceObject: &mut DEVICE_OBJECT, Irp: &mut IRP)>;
+    Option<extern "system" fn(DeviceObject: &mut DEVICE_OBJECT, Irp: &mut IRP)>;
 
 pub type PDRIVER_DISPATCH =
-Option<unsafe extern "system" fn(DeviceObject: &mut DEVICE_OBJECT, Irp: &mut IRP) -> NTSTATUS>;
+    Option<unsafe extern "system" fn(DeviceObject: &mut DEVICE_OBJECT, Irp: &mut IRP) -> NTSTATUS>;
 
 pub type PIO_COMPLETION_ROUTINE = Option<
-    extern "system" fn(DeviceObject: &mut DEVICE_OBJECT, Irp: &mut IRP, Context: PVOID)
-                       -> IO_COMPLETION_ROUTINE_RESULT,
+    extern "system" fn(
+        DeviceObject: &mut DEVICE_OBJECT,
+        Irp: &mut IRP,
+        Context: PVOID,
+    ) -> IO_COMPLETION_ROUTINE_RESULT,
 >;
 
 pub type KIRQL = UCHAR;
@@ -287,9 +287,7 @@ pub type PEX_SPIN_LOCK = *mut LONG;
 
 #[link(name = "ntoskrnl")]
 extern "system" {
-    pub fn ExAcquireSpinLockExclusive(
-        SpinLock: PEX_SPIN_LOCK,
-    ) -> KIRQL;
+    pub fn ExAcquireSpinLockExclusive(SpinLock: PEX_SPIN_LOCK) -> KIRQL;
 
     pub fn IoCreateDevice(
         DriverObject: *mut DRIVER_OBJECT,
@@ -307,10 +305,7 @@ extern "system" {
         DeviceName: &UNICODE_STRING,
     ) -> NTSTATUS;
     pub fn IoDeleteSymbolicLink(SymbolicLinkName: &UNICODE_STRING) -> NTSTATUS;
-    pub fn ExReleaseSpinLockExclusive(
-        SpinLock: PEX_SPIN_LOCK,
-        OldIrql: KIRQL,
-    );
+    pub fn ExReleaseSpinLockExclusive(SpinLock: PEX_SPIN_LOCK, OldIrql: KIRQL);
     pub fn ExAcquireSpinLockShared(SpinLock: PEX_SPIN_LOCK) -> KIRQL;
     pub fn ExReleaseSpinLockShared(SpinLock: PEX_SPIN_LOCK, OldIrql: KIRQL);
     pub fn RtlGetVersion(lpVersionInformation: PRTL_OSVERSIONINFOW) -> NTSTATUS;
@@ -436,14 +431,14 @@ pub struct IRP {
     pub Tail: _IRP__bindgen_ty_3,
 }
 
-UNION!{union _IRP__bindgen_ty_1 {
+UNION! {union _IRP__bindgen_ty_1 {
     [u32;1] [u64;1],
     MasterIrp MasterIrp_mut: *mut IRP,
     IrpCount IrpCount_mut: LONG,
     SystemBuffer SystemBuffer_mut: PVOID,
 }}
 
-UNION!{union _IRP__bindgen_ty_2 {
+UNION! {union _IRP__bindgen_ty_2 {
     [u64;1] [u64; 2usize],
     AsynchronousParameters AsynchronousParameters_mut: _IRP__bindgen_ty_2__bindgen_ty_1,
     AllocationSize AllocationSize_mut: LARGE_INTEGER,
@@ -451,17 +446,17 @@ UNION!{union _IRP__bindgen_ty_2 {
 
 #[repr(C)]
 pub struct _IRP__bindgen_ty_2__bindgen_ty_1 {
-    __bindgen_anon_1 : _IRP__bindgen_ty_2__bindgen_ty_1__bindgen_ty_1,
-    UserApcContext : PVOID,
+    __bindgen_anon_1: _IRP__bindgen_ty_2__bindgen_ty_1__bindgen_ty_1,
+    UserApcContext: PVOID,
 }
 
-UNION!{union _IRP__bindgen_ty_2__bindgen_ty_1__bindgen_ty_1 {
+UNION! {union _IRP__bindgen_ty_2__bindgen_ty_1__bindgen_ty_1 {
     [u32;1] [u64; 1],
     UserApcRoutine UserApcRoutine_mut: PIO_APC_ROUTINE,
     IssuingProcess IssuingProcess_mut: PVOID,
 }}
 
-UNION!{union _IRP__bindgen_ty_3 {
+UNION! {union _IRP__bindgen_ty_3 {
     [u32;12usize] [u64; 11usize],
     Overlay Overlay_mut: _IRP__bindgen_ty_3__bindgen_ty_1,
     Apc Apc_mut: KAPC,
@@ -483,13 +478,13 @@ pub struct _IRP__bindgen_ty_3__bindgen_ty_1__bindgen_ty_2 {
     pub __bindgen_anon_1: _IRP__bindgen_ty_3__bindgen_ty_1__bindgen_ty_2__bindgen_ty_1,
 }
 
-UNION!{union _IRP__bindgen_ty_3__bindgen_ty_1__bindgen_ty_2__bindgen_ty_1 {
+UNION! {union _IRP__bindgen_ty_3__bindgen_ty_1__bindgen_ty_2__bindgen_ty_1 {
     [u32;1] [u64; 1],
     CurrentStackLocation CurrentStackLocation_mut: PIO_STACK_LOCATION,
     PacketType PacketType_mut: ULONG,
 }}
 
-UNION!{union _IRP__bindgen_ty_3__bindgen_ty_1__bindgen_ty_1 {
+UNION! {union _IRP__bindgen_ty_3__bindgen_ty_1__bindgen_ty_1 {
  [u32; 4usize] [u64; 4usize],
     DeviceQueueEntry DeviceQueueEntry_mut: KDEVICE_QUEUE_ENTRY,
     __bindgen_anon_1 __bindgen_anon_1_mut: _IRP__bindgen_ty_3__bindgen_ty_1__bindgen_ty_1__bindgen_ty_1,
@@ -520,7 +515,6 @@ pub const SL_INVOKE_ON_CANCEL: u8 = 0x20;
 pub const SL_INVOKE_ON_SUCCESS: u8 = 0x40;
 pub const SL_INVOKE_ON_ERROR: u8 = 0x80;
 
-
 #[repr(C)]
 pub struct IO_STACK_LOCATION {
     pub MajorFunction: UCHAR,
@@ -534,7 +528,7 @@ pub struct IO_STACK_LOCATION {
     pub Context: PVOID,
 }
 
-UNION!{union  IO_STACK_LOCATION_s1_Parameters{
+UNION! {union  IO_STACK_LOCATION_s1_Parameters{
      [u32; 4usize]  [u64; 4usize],
     DeviceIoControl DeviceIoControl_mut: IO_STACK_LOCATION_s1_Parameters_u1_DeviceIoControl,
 }}
@@ -572,11 +566,11 @@ pub use self::_hide::*;
 pub fn IoGetCurrentIrpStackLocation(pirp: PIRP) -> PIO_STACK_LOCATION {
     unsafe {
         return *((&mut *pirp)
-        .Tail
-        .Overlay()
-        .__bindgen_anon_2
-        .__bindgen_anon_1
-        .CurrentStackLocation());
+            .Tail
+            .Overlay()
+            .__bindgen_anon_2
+            .__bindgen_anon_1
+            .CurrentStackLocation());
     }
 }
 
@@ -601,7 +595,6 @@ impl IO_STACK_LOCATION {
     }
 }
 
-
 extern "system" {
     pub fn KeWaitForSingleObject(
         Object: PVOID,
@@ -615,8 +608,12 @@ extern "system" {
 #[repr(C)]
 pub struct WAIT_CONTEXT_BLOCK {
     WaitQueueEntry: *mut KDEVICE_QUEUE_ENTRY,
-    DeviceRoutine: extern "system" fn(_obj: PDEVICE_OBJECT, _irp: *mut IRP, *mut u8, *mut u8)
-                                      -> IO_ALLOCATION_ACTION,
+    DeviceRoutine: extern "system" fn(
+        _obj: PDEVICE_OBJECT,
+        _irp: *mut IRP,
+        *mut u8,
+        *mut u8,
+    ) -> IO_ALLOCATION_ACTION,
     DeviceContext: *mut u8,
     NumberOfMapRegisters: u32,
     DeviceObject: *mut u8,
@@ -701,8 +698,18 @@ extern "system" {
     pub fn KeReadStateEvent(Event: PKEVENT) -> i32;
     pub fn KeResetEvent(Event: PKEVENT) -> i32;
     pub fn KeClearEvent(Event: PKEVENT);
+    pub fn ExReleaseFastMutex(FastMutex: PFAST_MUTEX);
+    pub fn ExAcquireFastMutex(FastMutex: PFAST_MUTEX);
+    pub fn ExTryToAcquireFastMutex(FastMutex: PFAST_MUTEX) -> bool;
 }
 
+pub unsafe fn ExInitializeFastMutex(FastMutex: PFAST_MUTEX) {
+    let pmut = &mut *FastMutex;
+    pmut.Count = FM_LOCK_BIT;
+    pmut.Owner = NULL;
+    pmut.Contention = 0;
+    KeInitializeEvent(&mut pmut.Event, SynchronizationEvent, false);
+}
 
 pub type PKEVENT = *mut KEVENT;
 
@@ -713,9 +720,21 @@ ENUM! {
     }
 }
 
-STRUCT!{ struct KEVENT {
+STRUCT! { struct KEVENT {
     Header: DISPATCHER_HEADER,
 }}
+
+STRUCT! { struct FAST_MUTEX {
+    Count: LONG,
+    Owner: PVOID,
+    Contention: ULONG,
+    Event: KEVENT,
+    OldIrql: ULONG,
+}}
+
+pub type PFAST_MUTEX = *mut FAST_MUTEX;
+pub type KGUARDED_MUTEX = FAST_MUTEX;
+pub type PKGUARDED_MUTEX = *mut FAST_MUTEX;
 
 use self::IO_PRIORITY::*;
 
@@ -738,7 +757,7 @@ pub struct IO_STATUS_BLOCK {
     pub Information: ULONG_PTR,
 }
 
-UNION!{union _IO_STATUS_BLOCK__bindgen_ty_1 {
+UNION! {union _IO_STATUS_BLOCK__bindgen_ty_1 {
     [u32;1] [u64;1],
     Status Status_mut: NTSTATUS,
     Pointer Pointer_mut: PVOID,
@@ -816,9 +835,11 @@ pub const GENERIC_WRITE: u32 = 1073741824;
 pub const GENERIC_EXECUTE: u32 = 536870912;
 pub const GENERIC_ALL: u32 = 268435456;
 
+pub const FM_LOCK_BIT: LONG = 0x1; // Actual lock bit, 1 = Unlocked, 0 = Locked
+pub const FM_LOCK_BIT_V: LONG = 0x0; // Lock bit as a bit number
+
 #[repr(C)]
-pub enum POOL_TYPE
-{
+pub enum POOL_TYPE {
     NonPagedPool,
     NonPagedPoolExecute,
 }
