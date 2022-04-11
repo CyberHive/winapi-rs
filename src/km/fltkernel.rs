@@ -55,9 +55,7 @@ extern "system" {
         DesiredAccess: ACCESS_MASK,
     ) -> NTSTATUS;
 
-    pub fn FltFreeSecurityDescriptor(
-        SecurityDescriptor: PSECURITY_DESCRIPTOR
-    );
+    pub fn FltFreeSecurityDescriptor(SecurityDescriptor: PSECURITY_DESCRIPTOR);
 
     pub fn FltCreateCommunicationPort(
         Filter: PFLT_FILTER,
@@ -70,14 +68,18 @@ extern "system" {
         MaxConnections: LONG,
     ) -> NTSTATUS;
 
-    pub fn FltCloseCommunicationPort(
-        ServerPort: PFLT_PORT,
-    );
+    pub fn FltCloseCommunicationPort(ServerPort: PFLT_PORT);
 
-    pub fn FltCloseClientPort(
-        Filter: PFLT_FILTER,
-        ClientPort: *mut PFLT_PORT,
-    );
+    pub fn FltCloseClientPort(Filter: PFLT_FILTER, ClientPort: *mut PFLT_PORT);
+
+    pub fn FltGetFileNameInformation(
+        CallbackData: PFLT_CALLBACK_DATA,
+        NameOptions: FLT_FILE_NAME_OPTIONS,
+        FileNameInformation: *mut PFLT_FILE_NAME_INFORMATION,
+    ) -> NTSTATUS;
+
+    pub fn FltParseFileNameInformation(FileNameInformation: PFLT_FILE_NAME_INFORMATION)
+        -> NTSTATUS;
 
     pub fn IoVolumeDeviceToDosName(VolumeDeviceObject: PVOID, DosName: PUNICODE_STRING)
         -> NTSTATUS;
@@ -102,14 +104,11 @@ pub type PFLT_CONNECT_NOTIFY = ::core::option::Option<
         ConnectionContext: PVOID,
         SizeOfContext: ULONG,
         ConnectionPortCookie: *mut PVOID,
-    ) -> NTSTATUS
+    ) -> NTSTATUS,
 >;
 
-pub type PFLT_DISCONNECT_NOTIFY = ::core::option::Option<
-    unsafe extern "system" fn(
-        ConnectionCookie: PVOID,
-    )
->;
+pub type PFLT_DISCONNECT_NOTIFY =
+    ::core::option::Option<unsafe extern "system" fn(ConnectionCookie: PVOID)>;
 
 pub type PFLT_MESSAGE_NOTIFY = ::core::option::Option<
     unsafe extern "system" fn(
@@ -119,7 +118,7 @@ pub type PFLT_MESSAGE_NOTIFY = ::core::option::Option<
         OutputBuffer: PVOID,
         OutputBufferLength: ULONG,
         ReturnOutputBufferLength: PULONG,
-    ) -> NTSTATUS
+    ) -> NTSTATUS,
 >;
 
 ENUM! {enum FLT_PREOP_CALLBACK_STATUS {
@@ -272,6 +271,36 @@ pub struct FLT_RELATED_OBJECTS {
 pub type PFILE_OBJECT = MISS_TYPE_PTR;
 
 pub type PCFLT_RELATED_OBJECTS = *const FLT_RELATED_OBJECTS;
+
+#[repr(C)]
+pub struct _FLT_FILE_NAME_INFORMATION {
+    pub Size: USHORT,
+    pub NamesParsed: FLT_FILE_NAME_PARSED_FLAGS,
+    pub Format: FLT_FILE_NAME_OPTIONS,
+    pub Name: UNICODE_STRING,
+    pub Volume: UNICODE_STRING,
+    pub Share: UNICODE_STRING,
+    pub Extension: UNICODE_STRING,
+    pub Stream: UNICODE_STRING,
+    pub FinalComponent: UNICODE_STRING,
+    pub ParentDir: UNICODE_STRING,
+}
+
+pub type FLT_FILE_NAME_INFORMATION = _FLT_FILE_NAME_INFORMATION;
+pub type PFLT_FILE_NAME_INFORMATION = *mut _FLT_FILE_NAME_INFORMATION;
+
+ENUM! { enum FLT_FILE_NAME_PARSED_FLAGS {
+    FLTFL_FILE_NAME_PARSED_FINAL_COMPONENT = 0x0001,
+    FLTFL_FILE_NAME_PARSED_EXTENSION       = 0x0002,
+    FLTFL_FILE_NAME_PARSED_STREAM          = 0x0004,
+    FLTFL_FILE_NAME_PARSED_PARENT_DIR      = 0x0008,
+}}
+
+ENUM! {enum FLT_FILE_NAME_OPTIONS {
+    FLT_FILE_NAME_NORMALIZED = 0x01,
+    FLT_FILE_NAME_OPENED     = 0x02,
+    FLT_FILE_NAME_SHORT      = 0x03,
+}}
 
 pub type PFLT_INSTANCE_QUERY_TEARDOWN_CALLBACK = ::core::option::Option<
     unsafe extern "system" fn(
