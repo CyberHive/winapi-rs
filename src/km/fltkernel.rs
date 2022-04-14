@@ -137,6 +137,15 @@ ENUM! {enum FLT_POSTOP_CALLBACK_STATUS {
     FLT_POSTOP_DISALLOW_FSFILTER_IO,
 }}
 
+//
+//  If set, this instance is being detached and this post-operation
+//  routine has been called for cleanup processing (drained).  Since this
+//  instance is going away, you should perform a minimum of operations
+//  while processing this completion.
+//
+
+pub const FLTFL_POST_OPERATION_DRAINING: FLT_POST_OPERATION_FLAGS = 0x00000001;
+
 ENUM! {enum FLT_FILESYSTEM_TYPE {
     FLT_FSTYPE_UNKNOWN = 0,
     FLT_FSTYPE_RAW = 1,
